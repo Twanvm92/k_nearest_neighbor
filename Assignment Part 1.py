@@ -97,6 +97,6 @@ df_results_qa = pd.DataFrame(data = {'k': list(range(1,21)), 'Empirical Training
                               'Empirical Test Loss': empirical_test_loss})
 df_results_qa.to_csv("results_q1a", index = False)
 
-        
+# Even uitproberen of het lukt om de file te committen -Daan   
         
         
