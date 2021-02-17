@@ -8,6 +8,8 @@ Created on Thu Feb  4 13:34:03 2021
 import numpy as np
 import pandas as pd
 from tqdm import tqdm #Loadingbar
+from collections import defaultdict
+
 
 def euclidean_distance(img_1, img_2):
     '''
@@ -31,36 +33,34 @@ def find_majority_class(labels):
     '''
     Finding the majority class from a set of labels
     '''
-    count_dict = {}
-    # Initiate dictionary
-    for i in range(10):
-        count_dict[i] = [0,0]
-    
+    count_freq = defaultdict(int); sum_diff = defaultdict(float)
     for diff, label in labels:
-        count_dict[label][0] += 1 # Frequency
-        count_dict[label][1] += diff # Total difference
+        count_freq[label] += 1 # Frequency
+        sum_diff[label] += diff # Total difference
     
-    max_freq = max(count_dict.values(), key=lambda x : x[0])[0] # maximum frequency
-    max_keys = [(label, score) for label, score in count_dict.items() if score[0] == max_freq]
+    max_freq = max(count_freq.values()) # maximum frequency
+    max_keys = [label for label, freq in count_freq.items() if freq == max_freq]
     
     if len(max_keys) == 1:
-        return(max_keys[0][0])
+        return(max_keys[0])
     else:
-        return(min(max_keys, key=lambda x: x[1])[0]) # Return the label with smallest difference
+        return(min(sum_diff, key = sum_diff.get)) # Return the label with smallest difference
                                
 
 def predict_digits(k, train_images, train_labels, test_image):
-    
+    '''
+    Predicting the label of a handwritten digit
+    '''
     # Calculate distances
     distances = list()
     for (image, label) in zip(train_images, train_labels):
         distances.append((euclidean_distance(image, test_image), label))
 
     # Sorted distances
-    sorted_distances = sorted(distances, key=lambda x: x[0])
+    distances.sort(key=lambda x: x[0])
     
     # Extract k labels
-    k_labels = sorted_distances[:k]
+    k_labels = distances[:k]
     
     return find_majority_class(k_labels)
 
@@ -70,10 +70,11 @@ train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting trai
 test_labels, test_images = test_data[:,0], test_data[:, 1:] # Splitting test data
 
 empirical_test_loss = []; empirical_train_loss = []
-for k in range(1,2):
+for k in range(1,2): # Takes 6min per iteration of k
     
     i_test = 0; loss_test = 0
     i_train = 0; loss_train = 0
+    
     for test_image in tqdm(test_images):
         prediction_test = predict_digits(k, train_images, train_labels, test_image)
         
@@ -81,6 +82,7 @@ for k in range(1,2):
             loss_test += 1
     
         i_test += 1
+        
     for train_image in train_images:
         prediction_train = predict_digits(k, train_images, train_labels, train_image)
         
@@ -93,10 +95,8 @@ for k in range(1,2):
     empirical_train_loss.append(loss_train / len(train_images))
     
 
-df_results_qa = pd.DataFrame(data = {'k': list(range(1,21)), 'Empirical Training Loss': empirical_train_loss,
+df_results_qa = pd.DataFrame(data = {'k': list(range(1,2)), 'Empirical Training Loss': empirical_train_loss,
                               'Empirical Test Loss': empirical_test_loss})
 df_results_qa.to_csv("results_q1a", index = False)
 
-# Even uitproberen of het lukt om de file te committen -Daan   
-        
         
