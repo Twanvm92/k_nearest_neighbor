@@ -23,7 +23,7 @@ for k in range(1,2): # Takes 20min per iteration of k
         train_labels_loocv = np.delete(train_labels, image_index) # Leave one out, indeces
         
         prediction = predict_digits(k, train_images_loocv, train_labels_loocv, 
-                                    train_images[image_index])
+                                    train_images[image_index], euclidean_distance)
         
         if prediction != train_labels[image_index]:
             loss += 1

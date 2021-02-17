@@ -4,7 +4,7 @@ Created on Thu Feb  4 13:34:03 2021
 
 @author: 20172458
 """
-
+import time
 from collections import defaultdict
 
 def euclidean_distance(img_1, img_2):
@@ -29,6 +29,7 @@ def find_majority_class(labels):
     '''
     Finding the majority class from a set of labels
     '''
+    start_find =  time.time()
     count_freq = defaultdict(int); sum_diff = defaultdict(float)
     for diff, label in labels:
         count_freq[label] += 1 # Frequency
@@ -37,6 +38,8 @@ def find_majority_class(labels):
     max_freq = max(count_freq.values()) # maximum frequency
     max_keys = [label for label, freq in count_freq.items() if freq == max_freq]
     
+    end_find =  time.time()
+    print("Finding majority: {}".format(end_find - start_find))
     if len(max_keys) == 1:
         return(max_keys[0])
     else:
@@ -49,12 +52,21 @@ def predict_digits(k, train_images, train_labels, test_image):
     '''
     # Calculate distances
     distances = list()
+    start_dist = time.time()
     for (image, label) in zip(train_images, train_labels):
+        #start_dist_one =  time.time()
         distances.append((euclidean_distance(image, test_image), label))
-
+        #end_dist_one =  time.time()
+        #print("Calculating one distance: {}".format(end_dist_one - start_dist_one))
+    
+    end_dist = time.time()
+    print("Calculating distances: {}".format(end_dist - start_dist))
+    
+    start_sort = time.time()
     # Sorted distances
     distances.sort(key=lambda x: x[0])
-    
+    end_sort =  time.time()
+    print("Sorting distances: {}".format(end_sort - start_sort))
     # Extract k labels
     k_labels = distances[:k]
     

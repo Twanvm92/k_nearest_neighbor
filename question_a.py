@@ -22,7 +22,7 @@ for k in range(1,2): # Takes 6min per iteration of k
     i_train = 0; loss_train = 0
     
     for test_image in tqdm(test_images):
-        prediction_test = predict_digits(k, train_images, train_labels, test_image)
+        prediction_test = predict_digits(k, train_images, train_labels, test_image, euclidean_distance)
         
         if prediction_test != test_labels[i_test]:
             loss_test += 1
@@ -30,7 +30,7 @@ for k in range(1,2): # Takes 6min per iteration of k
         i_test += 1
         
     for train_image in train_images:
-        prediction_train = predict_digits(k, train_images, train_labels, train_image)
+        prediction_train = predict_digits(k, train_images, train_labels, train_image, euclidean_distance)
         
         if prediction_train != train_labels[i_train]:
             loss_train += 1
