@@ -39,7 +39,7 @@ def find_majority_class(labels):
     max_keys = [label for label, freq in count_freq.items() if freq == max_freq]
     
     end_find =  time.time()
-    print("Finding majority: {}".format(end_find - start_find))
+    # print("Finding majority: {}".format(end_find - start_find))
     if len(max_keys) == 1:
         return(max_keys[0])
     else:
@@ -54,19 +54,18 @@ def predict_digits(k, train_images, train_labels, test_image):
     distances = list()
     start_dist = time.time()
     for (image, label) in zip(train_images, train_labels):
-        #start_dist_one =  time.time()
+        # start_dist_one =  time.time()
         distances.append((euclidean_distance(image, test_image), label))
-        #end_dist_one =  time.time()
-        #print("Calculating one distance: {}".format(end_dist_one - start_dist_one))
+        # end_dist_one =  time.time()
+        # print("Calculating one distance: {}".format(end_dist_one - start_dist_one))
     
     end_dist = time.time()
-    print("Calculating distances: {}".format(end_dist - start_dist))
-    
+    # print("Calculating distances: {}".format(end_dist - start_dist))
     start_sort = time.time()
     # Sorted distances
     distances.sort(key=lambda x: x[0])
     end_sort =  time.time()
-    print("Sorting distances: {}".format(end_sort - start_sort))
+    # print("Sorting distances: {}".format(end_sort - start_sort))
     # Extract k labels
     k_labels = distances[:k]
     
