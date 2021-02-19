@@ -43,7 +43,7 @@ for k in range(1,21): # Takes 6min per iteration of k
 
 df_results_qa = pd.DataFrame(data = {'k': list(range(1,21)), 'Empirical Training Loss': empirical_train_loss,
                               'Empirical Test Loss': empirical_test_loss})
-df_results_qa.to_csv("results_q1a", index = False)
+df_results_qa_.to_csv("results_q1a_new_tie_breaker", index = False)
 
 
 
