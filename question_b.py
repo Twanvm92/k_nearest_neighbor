@@ -13,7 +13,7 @@ from functions_part_one import *
 train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',')
 train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting training data
 
-empirical_loss = [] 
+cross_validation_score = [] 
 for k in range(1,2): # Takes 20min per iteration of k
     
     loss = 0
@@ -28,5 +28,8 @@ for k in range(1,2): # Takes 20min per iteration of k
         if prediction != train_labels[image_index]:
             loss += 1
             
-    empirical_loss.append(loss / len(train_images))
-    print(empirical_loss)
+    cross_validation_score.append(loss / len(train_images))
+
+
+df_results_qb = pd.DataFrame(data = {'k': list(range(1,21)), 'CVS training data': cross_validation_score})
+df_results_qb_.to_csv("results_q1b", index = False)
