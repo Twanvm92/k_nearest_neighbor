@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def bar_plot(title, subtitle, variable_df, bar_width_scaler, text_label):
+def bar_plot(question, title, subtitle, variable_df, bar_width_scaler, text_label):
     
     plt.figure(figsize=(15, 7))
     #label_font = {'fontname': 'calibri'}
@@ -40,13 +40,14 @@ def bar_plot(title, subtitle, variable_df, bar_width_scaler, text_label):
     
     # Formatting
     plt.xticks(x_axis + ((tot_width - width) / 2), k)
-    plt.ylabel('Loss', fontsize = 16, ** other_font)
+    plt.ylabel('Risk', fontsize = 16, ** other_font)
     plt.xlabel('k', fontsize = 16, ** other_font)
     plt.title(title, loc='left', fontsize=20, fontweight = "bold", ** other_font)
     plt.title(subtitle, loc='right', fontsize=14, color='dimgray', ** other_font)
     plt.legend(loc = 1, edgecolor = 'white')
+    plt.savefig(question + ".jpg")
 
-def line_plot(title, subtitle, variable_df, filled):
+def line_plot(question, title, subtitle, variable_df, filled):
     
     plt.figure(figsize=(15, 7))
     #label_font = {'fontname': 'calibri'}
@@ -65,18 +66,15 @@ def line_plot(title, subtitle, variable_df, filled):
         
     # Formatting
     plt.xticks(k)
-    plt.ylabel('Loss', fontsize = 16, ** other_font)
+    plt.ylabel('Risk', fontsize = 16, ** other_font)
     plt.xlabel('k', fontsize = 16, ** other_font)
     plt.title(title, loc='left', fontsize=20, fontweight = "bold", ** other_font)
     plt.title(subtitle, loc='right', fontsize=14, color='dimgray', ** other_font)
     plt.legend(loc = 1, edgecolor = 'white')
-
+    plt.savefig(question + ".jpg")
+    
 # EXAMPLES
-import random as rd
-df = pd.DataFrame(data = {'k': list(range(1,21)),
-                          'Empirical test loss': rd.sample(range(1, 100), 20),
-                          'Empirical training loss': rd.sample(range(1, 100), 20),
-                          'Empirical training try': rd.sample(range(1, 100), 20)})
+df = pd.read_csv("Qa.csv")
 
-bar_plot('TESTERRRRRRRRRRRR', 'Voor de sier', df, 1.5, False)
-line_plot('TESTERRRRRRRRRRRR', 'Voor de sier', df, False)
+bar_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, 1.5, False)
+#line_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, False)
