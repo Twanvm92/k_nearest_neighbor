@@ -14,7 +14,9 @@ train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',')
 train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting training data
 
 cross_validation_score = [] 
-for k in range(1,2): # Takes 20min per iteration of k
+max_k = 20
+min_k = 1
+for k in range(min_k,max_k + 1): # Takes 20min per iteration of k
     
     loss = 0
     for image_index in tqdm(range(len(train_images))):
@@ -23,7 +25,7 @@ for k in range(1,2): # Takes 20min per iteration of k
         train_labels_loocv = np.delete(train_labels, image_index) # Leave one out, indeces
         
         prediction = predict_digits(k, train_images_loocv, train_labels_loocv, 
-                                    train_images[image_index], euclidean_distance)
+                                    train_images[image_index])
         
         if prediction != train_labels[image_index]:
             loss += 1
@@ -31,5 +33,5 @@ for k in range(1,2): # Takes 20min per iteration of k
     cross_validation_score.append(loss / len(train_images))
 
 
-df_results_qb = pd.DataFrame(data = {'k': list(range(1,21)), 'CVS training data': cross_validation_score})
-df_results_qb_.to_csv("results_q1b", index = False)
+df_results_qb = pd.DataFrame(data = {'k': list(range(min_k,max_k + 1)), 'CVS training data': cross_validation_score})
+df_results_qb.to_csv("results_q1b", index = False)
