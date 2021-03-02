@@ -47,7 +47,7 @@ def bar_plot(question, title, subtitle, variable_df, bar_width_scaler, text_labe
     plt.legend(loc = 1, edgecolor = 'white')
     plt.savefig(question + ".jpg")
 
-def line_plot(question, title, subtitle, variable_df, filled):
+def line_plot(question, title, subtitle, variable_df, line_thick, filled):
     
     plt.figure(figsize=(15, 7))
     #label_font = {'fontname': 'calibri'}
@@ -61,8 +61,8 @@ def line_plot(question, title, subtitle, variable_df, filled):
         if filled:
             plt.fill_between(k, variable_df_excl[name], label = name, alpha = 0.3)
         else:
-            plt.plot(k, variable_df_excl[name], label = name, linewidth = 2)
-            plt.scatter(k, variable_df_excl[name])
+            plt.plot(k, variable_df_excl[name], label = name, linewidth = line_thick)
+            plt.scatter(k, variable_df_excl[name], s = 5 * line_thick)
         
     # Formatting
     plt.xticks(k)
@@ -73,8 +73,9 @@ def line_plot(question, title, subtitle, variable_df, filled):
     plt.legend(loc = 1, edgecolor = 'white')
     plt.savefig(question + ".jpg")
     
+    
 # EXAMPLES
-df = pd.read_csv("Qa.csv")
+df = pd.read_csv("results_q1c_plot.csv")
 
-bar_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, 1.5, False)
-#line_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, False)
+#bar_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, 1.5, False)
+line_plot('Qc', 'Empirical test risk', 'Minkowski distance', df, 1.2,False)
