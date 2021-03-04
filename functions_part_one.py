@@ -24,7 +24,7 @@ def cosine_distance(img_1, img_2):
     '''
     Calculate the cosine distance
     '''
-    return sum(img_1 * img_2) / (((sum(img_1 ** 2)) ** (1/2)) * ((sum(img_2 ** 2)) ** (1/2)))
+    return 1 - sum(img_1 * img_2) / (((sum(img_1 ** 2)) ** (1/2)) * ((sum(img_2 ** 2)) ** (1/2)))
 
 def find_majority_class(labels):
     '''

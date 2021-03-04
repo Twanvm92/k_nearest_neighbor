@@ -4,12 +4,14 @@ from tqdm import tqdm #Loadingbar
 from scipy.ndimage import interpolation
 import os
 import pandas as pd
+import time
 from functions_part_one import *
 
 def calculate_loss(k, train, test):
     """ Function to calculate the loss for values for 1 to k """
+    start_time = time.time()
     empirical_test_loss = []
-    for k in range(k,k+1): 
+    for k in range(k,k+1):
         i_test = 0; loss_test = 0
         for test_image in tqdm(test):
             prediction = predict_digits(k, train, train_labels, test_image) # Makes a prediction for the given k and training set
@@ -18,7 +20,9 @@ def calculate_loss(k, train, test):
             i_test += 1
         loss = loss_test / len(test)
         print("The loss for k = {} is {}".format(k, loss))
-    return loss
+    end_time = time.time()
+    duration = end_time - start_time    
+    return {"Loss": loss, "Duration": int(duration), "k": k}
 
 train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',') # Import the small training data
 test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',') # Import the small test data
@@ -74,11 +78,15 @@ blur_test_images_2 = blur_images(blur_test_images)
 #calculate_loss(20, blur_train_images, blur_test_images) # Determine the loss for k = [1,20] for the blurred images
 #calculate_loss(20, blur_train_images_2, blur_test_images_2) #Determine the loss for k = [1,20] for the twice blurred images
 
-# If you want to see the blurred image:
+# If you want to see the blurred image:    
     
-plt.imshow(blur_train_images_2[1].reshape(7,7), cmap='hot', interpolation='nearest')
+plt.imshow(train_images[0].reshape(28,28), cmap='gray', interpolation='nearest')
+plt.show()  
+
+plt.imshow(blur_train_images[0].reshape(14,14), cmap='gray', interpolation='nearest')
 plt.show()
-plt.imshow(blur_train_images[1].reshape(14,14), cmap='hot', interpolation='nearest')
+
+plt.imshow(blur_train_images_2[0].reshape(7,7), cmap='gray', interpolation='nearest')
 plt.show()
 
 ############################## Deskewed images #########################################
@@ -105,21 +113,20 @@ def deskew(image):
 def deskew_images(images):
     deskewed_images = np.zeros(shape=(len(images), 28*28))
     for x in range(len(images)):
-        image = train_images[x].reshape(28,28)
-        #plt.imshow(image, cmap='hot', interpolation='nearest')
-        #plt.show()
+        image = images[x].reshape(28,28)
         deskew_image = deskew(image)
-        #print(deskew(image))
-        #plt.imshow(deskew_image, cmap='hot', interpolation='nearest')
-        #plt.show()
-        deskew_image = deskew_image.reshape(1, 784)
-        deskewed_images[x] = deskew_image
+        deskew_image = np.reshape(deskew_image, 784)
+        for i in range(len(deskew_image)):
+            if deskew_image[i] < 0: # If the value of the pixel is higher than the threshold
+                deskew_image[i] = 0  # Replace the corresponding pixel in the new image by 1
+
+        deskewed_images[x] = deskew_image      
     return deskewed_images
 
 deskew_train_images = deskew_images(train_images) # Deskew the images
 deskew_test_images = deskew_images(test_images)
 
-calculate_loss(6, deskew_train_images, deskew_test_images) #Determine the loss for k = [1,20] for the deskewed images
+#calculate_loss(6, deskew_train_images, deskew_test_images) #Determine the loss for k = [1,20] for the deskewed images
 
 ############################## Combinations #########################################  
 
@@ -131,7 +138,7 @@ blur_deskew_test_images = blur_images(deskew_test_images)
 # Deskew and double blur
 double_blur_deskew_train_images = blur_images(blur_deskew_train_images)
 double_blur_deskew_test_images = blur_images(blur_deskew_test_images)
-#calculate_loss(20, double_blur_deskew_train_images, double_blur_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, double-blurred images
+#calculate_loss(6, double_blur_deskew_train_images, double_blur_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, double-blurred images
 
 # Deskew and binary (threshold = 50)
 binary_50_deskew_train_images = binary_images(deskew_train_images, 50)
@@ -145,19 +152,104 @@ binary_100_deskew_test_images = binary_images(deskew_test_images, 100)
 
 ############################## Results of D ######################################### 
 
-#results_d = pd.DataFrame()
-#results_d.columns = ["No Preprocess", "Deskewed", "Blurred", "Double Blurred", "Binary (threshold=50)", "Binary (threshold=100)", "Deskewed+Binary (t=50)", "Deskewed+Binary (t=100)", "Deskewed+Blur", "Deskewed+Double Blur"]
+# Combinations to be calculated
 preprocessing = [(train_images, test_images), 
  (deskew_train_images, deskew_test_images),
  (blur_train_images, blur_test_images),
  (blur_train_images_2, blur_test_images_2),
- (binary_50_train_images, binary_50_test_images), 
- (binary_100_train_images, binary_100_test_images),
  (blur_deskew_train_images, blur_deskew_test_images),
- (double_blur_deskew_train_images, double_blur_deskew_test_images),
- (binary_50_deskew_train_images, binary_50_deskew_test_images),
- (binary_100_deskew_train_images, binary_100_deskew_test_images)]
+ (double_blur_deskew_train_images, double_blur_deskew_test_images)]
 
+############################## Euclidean results #########################################
 
+def predict_digits(k, train_images, train_labels, test_image, distance_m=None):
+    '''
+    Predicting the label of a handwritten digit
+    '''
+    # Calculate distances
+    distances = list()
+    for (image, label) in zip(train_images, train_labels):
+        # determine distance metric
+        if distance_m == None:
+            distance_result = euclidean_distance(image, test_image)
+        else:
+            # call the _distance() function prefixed with passed argument distance_m
+            distance_result = globals()[f'{distance_m}_distance'](image, test_image)
+        distances.append((distance_result, label))
+    # Sorted distances
+    distances.sort(key=lambda x: x[0])
+    # Extract k labels
+    k_labels = distances[:k]
+    return find_majority_class(k_labels)
+
+euclidean_losses = []
+methods = ["No Preprocess", "Deskewed", "Blurred", "Double Blurred", "Deskewed+Blur", "Deskewed+Double Blur"]
 for i in range(len(preprocessing)):
-    calculate_loss(6, preprocessing[i][0], preprocessing[i][1])
+    euclidean_losses.append(calculate_loss(6, preprocessing[i][0], preprocessing[i][1]))
+    euclidean_losses[i]["Method"] = methods[i]  
+df_results_qd = pd.DataFrame(euclidean_losses)
+df_results_qd.to_csv("results_q1d_euclidean", index = False)
+
+############################## Cosine results #########################################   
+
+def predict_digits(k, train_images, train_labels, test_image, distance_m=None):
+    '''
+    Predicting the label of a handwritten digit
+    '''
+    # Calculate distances
+    distances = list()
+    for (image, label) in zip(train_images, train_labels):
+        # determine distance metric
+        if distance_m == None:
+            distance_result = cosine_distance(image, test_image)
+        else:
+            # call the _distance() function prefixed with passed argument distance_m
+            distance_result = globals()[f'{distance_m}_distance'](image, test_image)
+        distances.append((distance_result, label))
+    distances.sort(key=lambda x: x[0])
+    k_labels = distances[:k]
+    return find_majority_class(k_labels)
+
+def normalize_images(images):
+    normalized_images = np.zeros(shape=(len(images), len(images[0])))
+    for i in range(len(images)):
+        norm_image = np.linalg.norm(images[i])
+        normalized_images[i] = images[i]/norm_image
+    return normalized_images
+
+cosine_losses = []
+for i in range(len(preprocessing)):
+    cosine_losses.append(calculate_loss(6, normalize_images(preprocessing[i][0]), normalize_images(preprocessing[i][1])))
+    cosine_losses[i]["Method"] = methods[i]  
+df_results_qd = pd.DataFrame(cosine_losses)
+df_results_qd.to_csv("results_q1d_cosine", index = False)     
+
+############################## Minkowski results #########################################   
+
+def predict_digits(k, train_images, train_labels, test_image, p=14, distance_m=None):
+    '''
+    Predicting the label of a handwritten digit
+    '''
+    # Calculate distances
+    distances = list()
+    # start_dist = time.time()
+    for (image, label) in zip(train_images, train_labels):
+        # determine distance metric
+        if distance_m == None:
+            distance_result = minkowski_distance(image, test_image, p)
+        else:
+            # call the _distance() function prefixed with passed argument distance_m
+            distance_result = globals()[f'{distance_m}_distance'](image, test_image)
+        distances.append((distance_result, label))
+    # Sorted distances
+    distances.sort(key=lambda x: x[0])
+    # Extract k labels
+    k_labels = distances[:k]
+    return find_majority_class(k_labels)
+
+minkowski_losses = []
+for i in range(len(preprocessing)):
+    minkowski_losses.append(calculate_loss(6, preprocessing[i][0], preprocessing[i][1]))
+    minkowski_losses[i]["Method"] = methods[i]  
+df_results_qd = pd.DataFrame(minkowski_losses)
+df_results_qd.to_csv("results_q1d_minkowski", index = False)
