@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm #Loadingbar
 from scipy.ndimage import interpolation
+import os
+import pandas as pd
 from functions_part_one import *
 
 def calculate_loss(k, train, test):
     """ Function to calculate the loss for values for 1 to k """
     empirical_test_loss = []
-    for k in range(1,k+1): 
+    for k in range(k,k+1): 
         i_test = 0; loss_test = 0
         for test_image in tqdm(test):
             prediction = predict_digits(k, train, train_labels, test_image) # Makes a prediction for the given k and training set
@@ -16,9 +18,10 @@ def calculate_loss(k, train, test):
             i_test += 1
         loss = loss_test / len(test)
         print("The loss for k = {} is {}".format(k, loss))
+    return loss
 
-train_data = np.genfromtxt(r"C:\Users\daanv\Documents\DSiE 1\Q3\2DI70 Statistical Learning Theory\Assignment 1\k_nearest_neighbor\MNIST_train_small.csv", delimiter=',') # Import the small training data
-test_data = np.genfromtxt(r"C:\Users\daanv\Documents\DSiE 1\Q3\2DI70 Statistical Learning Theory\Assignment 1\k_nearest_neighbor\MNIST_test_small.csv", delimiter=',') # Import the small test data
+train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',') # Import the small training data
+test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',') # Import the small test data
 train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting training data
 test_labels, test_images = test_data[:,0], test_data[:, 1:] # Splitting test data
 
@@ -28,15 +31,23 @@ def binary_images(images, threshold):
     binary_images = np.zeros(shape=(len(images), len(images[0]))) # Empty array for the binary images
     for x in range(len(images)):
         image = images[x]
+        #image_2 = image.reshape(28,28)
+        #plt.imshow(image_2, cmap='hot', interpolation='nearest')
+        #plt.show()
         new_image = np.zeros(shape=len(image)) # Set all values of the pixels of the new image to 0
         for i in range(len(image)):
             if image[i] > threshold: # If the value of the pixel is higher than the threshold
                 new_image[i] = 1  # Replace the corresponding pixel in the new image by 1
         binary_images[x] = new_image
+        #new_image_2 = new_image.reshape(28,28)
+        #plt.imshow(new_image_2, cmap='hot', interpolation='nearest')
+        #plt.show()
     return binary_images
 
-binary_train_images = binary_images(train_images, 50)
-binary_test_images = binary_images(test_images, 50)
+binary_50_train_images = binary_images(train_images, 50)
+binary_50_test_images = binary_images(test_images, 50)
+binary_100_train_images = binary_images(train_images, 100)
+binary_100_test_images = binary_images(test_images, 100)
 #calculate_loss(20, binary_train_images, binary_test_images) # Determine the loss for k = [1,20] for the binary images       
 
 ############################## Blurred images #########################################  
@@ -65,10 +76,10 @@ blur_test_images_2 = blur_images(blur_test_images)
 
 # If you want to see the blurred image:
     
-#plt.imshow(blur_train_images_2[1].reshape(7,7), cmap='hot', interpolation='nearest')
-#plt.show()
-#plt.imshow(blur_train_images[1].reshape(14,14), cmap='hot', interpolation='nearest')
-#plt.show()
+plt.imshow(blur_train_images_2[1].reshape(7,7), cmap='hot', interpolation='nearest')
+plt.show()
+plt.imshow(blur_train_images[1].reshape(14,14), cmap='hot', interpolation='nearest')
+plt.show()
 
 ############################## Deskewed images #########################################
 def moments(image):
@@ -98,6 +109,7 @@ def deskew_images(images):
         #plt.imshow(image, cmap='hot', interpolation='nearest')
         #plt.show()
         deskew_image = deskew(image)
+        #print(deskew(image))
         #plt.imshow(deskew_image, cmap='hot', interpolation='nearest')
         #plt.show()
         deskew_image = deskew_image.reshape(1, 784)
@@ -107,7 +119,7 @@ def deskew_images(images):
 deskew_train_images = deskew_images(train_images) # Deskew the images
 deskew_test_images = deskew_images(test_images)
 
-#calculate_loss(20, deskew_train_images, deskew_test_images) #Determine the loss for k = [1,20] for the deskewed images
+calculate_loss(6, deskew_train_images, deskew_test_images) #Determine the loss for k = [1,20] for the deskewed images
 
 ############################## Combinations #########################################  
 
@@ -121,7 +133,31 @@ double_blur_deskew_train_images = blur_images(blur_deskew_train_images)
 double_blur_deskew_test_images = blur_images(blur_deskew_test_images)
 #calculate_loss(20, double_blur_deskew_train_images, double_blur_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, double-blurred images
 
-# Deskew and binary
-binary_deskew_train_images = binary_images(deskew_train_images, 100)
-binary_deskew_test_images = binary_images(deskew_test_images, 100)
-#calculate_loss(20, binary_deskew_train_images, binary_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, binary images
+# Deskew and binary (threshold = 50)
+binary_50_deskew_train_images = binary_images(deskew_train_images, 50)
+binary_50_deskew_test_images = binary_images(deskew_test_images, 50)
+#calculate_loss(20, binary_50_deskew_train_images, binary_50_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, binary images
+
+# Deskew and binary (threshold = 100)
+binary_100_deskew_train_images = binary_images(deskew_train_images, 100)
+binary_100_deskew_test_images = binary_images(deskew_test_images, 100)
+#calculate_loss(20, binary_100_deskew_train_images, binary_100_deskew_test_images) #Determine the loss for k = [1,20] for the deskewed, binary images
+
+############################## Results of D ######################################### 
+
+#results_d = pd.DataFrame()
+#results_d.columns = ["No Preprocess", "Deskewed", "Blurred", "Double Blurred", "Binary (threshold=50)", "Binary (threshold=100)", "Deskewed+Binary (t=50)", "Deskewed+Binary (t=100)", "Deskewed+Blur", "Deskewed+Double Blur"]
+preprocessing = [(train_images, test_images), 
+ (deskew_train_images, deskew_test_images),
+ (blur_train_images, blur_test_images),
+ (blur_train_images_2, blur_test_images_2),
+ (binary_50_train_images, binary_50_test_images), 
+ (binary_100_train_images, binary_100_test_images),
+ (blur_deskew_train_images, blur_deskew_test_images),
+ (double_blur_deskew_train_images, double_blur_deskew_test_images),
+ (binary_50_deskew_train_images, binary_50_deskew_test_images),
+ (binary_100_deskew_train_images, binary_100_deskew_test_images)]
+
+
+for i in range(len(preprocessing)):
+    calculate_loss(6, preprocessing[i][0], preprocessing[i][1])
