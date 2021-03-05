@@ -153,29 +153,29 @@ def question_f(k):
     loss = 0
     print(f"for k: {k} and p: {p}")
 
-    kf = KFold(n_splits=10)
-    for train_index, test_index in kf.split(test_images):
-        s_train_images = test_images[train_index]
-        s_test_images = test_images[test_index]
-        s_train_labels = test_labels[train_index]
-        s_test_labels = test_labels[test_index]
+    #kf = KFold(n_splits=10)
+    #for train_index, test_index in kf.split(test_images):
+    #    s_train_images = test_images[train_index]
+     #   s_test_images = test_images[test_index]
+    #    s_train_labels = test_labels[train_index]
+    #    s_test_labels = test_labels[test_index]
 
         # tree = BallTree(s_train_images, leaf_size=400, metric='minkowski', p=p)
-        tree = KDTree(s_train_images, leaf_size=400,  metric='minkowski', p=p) 
-        for t_image_index in tqdm(range(len(s_test_images))): # 1/10 of one k
-            dist, ind = tree.query(s_test_images[t_image_index:t_image_index+1], k=k)
-            dist_labels = list()
-            dist_index = 0
-            for i in ind[0]:
-                dist_labels.append((dist[0][dist_index], s_train_labels[i]))
-                dist_index += 1
+    tree = KDTree(train_images, leaf_size=400,  metric='minkowski', p=p) 
+    for t_image_index in tqdm(range(len(test_images))): # 1/10 of one k
+        dist, ind = tree.query(test_images[t_image_index:t_image_index+1], k=k)
+        dist_labels = list()
+        dist_index = 0
+        for i in ind[0]:
+            dist_labels.append((dist[0][dist_index], s_train_labels[i]))
+            dist_index += 1
             
             # print("dist labels list with tuples: ")
             # print(dist_labels)
-            prediction = find_majority_class(dist_labels)
+        prediction = find_majority_class(dist_labels)
 
-            if prediction != s_test_labels[t_image_index]:
-                loss += 1
+        if prediction != s_test_labels[t_image_index]:
+            loss += 1
 
     cvs = loss / len(test_images)
     cross_validation_score.append(cvs)

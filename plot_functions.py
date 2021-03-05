@@ -75,7 +75,19 @@ def line_plot(question, title, subtitle, variable_df, line_thick, filled):
     
     
 # EXAMPLES
-df = pd.read_csv("results_q1c_plot.csv")
+#df = pd.read_csv("results_q1c_plot.csv")
 
 #bar_plot('Qa', 'Empirical training and test risk', 'Euclidean distance', df, 1.5, False)
-line_plot('Qc', 'Empirical test risk', 'Minkowski distance', df, 1.2,False)
+#line_plot('Qc', 'Empirical test risk', 'Minkowski distance', df, 1.2,False)
+
+# Plot question B
+#df = pd.read_csv(r"C:\Users\daanv\Documents\DSiE 1\Q3\2DI70 Statistical Learning Theory\Assignment 1\k_nearest_neighbor\results_q1b.csv")
+#line_plot('Qc', 'Empirical test risk', 'Minkowski distance', df, 1.2,False)
+
+
+df = pd.read_csv(r"C:\Users\daanv\Documents\DSiE 1\Q3\2DI70 Statistical Learning Theory\Assignment 1\k_nearest_neighbor\results_q1b_fixed_npdelete.csv", delimiter = ";")
+print(df)
+df.rename({"CVS training data": "LOOCV Risk"})
+line_plot('Qc', 'Empirical test risk', 'Euclidean distance', df, 1.2,False)
+
+
