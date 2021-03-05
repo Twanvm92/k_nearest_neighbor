@@ -3,17 +3,44 @@ import pandas as pd
 from tqdm import tqdm #Loadingbar
 from functions_part_one import *
 import sys, getopt
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut, KFold
 from timeit import default_timer as timer
 from datetime import timedelta
+from sklearn.neighbors import BallTree, DistanceMetric, KDTree
 
-train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',')
-test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',')
+############################## Blurred images #########################################  
+def blur_images(images):
+    """ This function blurs the images in a given set of images"""
+    pix_on_axis = int(len(images[0])**(0.5)) # Number of pixels on each axis of the images
+    blur_images = np.zeros(shape=(len(images), int((0.5*pix_on_axis)**2))) # Empty array for the blurred images
+    for x in range(len(images)):
+        image = images[x].reshape(pix_on_axis, pix_on_axis) # Transform the array to a matrix
+        new_image = []
+        for i in range(int(0.5*pix_on_axis)): 
+            for j in range(int(0.5*pix_on_axis)):
+                # Take the average of four pixels in a square of 2x2 from topleft corner to bottomright corner of the image
+                new_image.append((image[2*i][2*j] + image[2*i+1][2*j] +  image[2*i][2*j+1] +  image[2*i+1][2*j+1])/4)    
+        blur_images[x] = new_image   
+    return blur_images
+
+
+# train_data = np.genfromtxt("MNIST_train_small.csv", delimiter=',')
+train_data = np.genfromtxt("MNIST_train.csv", delimiter=',') # Import the large training data
+
+# smaller_split = 30000
+# train_labels, train_images = train_data[:smaller_split,0], train_data[:smaller_split, 1:] # Splitting training data
+# train_images = blur_images(train_images) # Blur the images once
+# train_images = blur_images(train_images) # Blur the images again
 train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting training data
+train_images = blur_images(train_images) # Blur the images once
+train_images = blur_images(train_images) # Blur the images once
+
+test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',')
 test_labels, test_images = test_data[:,0], test_data[:, 1:] # Splitting test data
 
 empirical_test_loss = []; empirical_train_loss = []
 cross_validation_score = [] 
+
 
 def question_a(k):
     
@@ -80,6 +107,109 @@ def question_c(k, max_p=15):
         # just append all scores to one long list. Scores will get grouped later by k and p with MultiIndex on df.
         cross_validation_score.append(loss / len(train_images)) 
 
+def question_e(k):
+    p = 8
+    loss = 0
+    print(f"for k: {k} and p: {p}")
+
+    kf = KFold(n_splits=10)
+    for train_index, test_index in kf.split(train_images):
+        s_train_images = train_images[train_index]
+        s_test_images = train_images[test_index]
+        s_train_labels = train_labels[train_index]
+        s_test_labels = train_labels[test_index]
+
+        # tree = BallTree(s_train_images, leaf_size=400, metric='minkowski', p=p)
+        tree = KDTree(s_train_images, leaf_size=400,  metric='minkowski', p=p) 
+        for t_image_index in tqdm(range(len(s_test_images))): # 1/10 of one k
+            dist, ind = tree.query(s_test_images[t_image_index:t_image_index+1], k=k)
+            dist_labels = list()
+            dist_index = 0
+            for i in ind[0]:
+                dist_labels.append((dist[0][dist_index], s_train_labels[i]))
+                dist_index += 1
+            
+            # print("dist labels list with tuples: ")
+            # print(dist_labels)
+            prediction = find_majority_class(dist_labels)
+
+            if prediction != s_test_labels[t_image_index]:
+                loss += 1
+
+    emp_train_l = loss / len(train_images)
+    empirical_train_loss.append(emp_train_l)
+
+def question_e(k):
+    p = 8
+    loss = 0
+    print(f"for k: {k} and p: {p}")
+
+    kf = KFold(n_splits=10)
+    for train_index, test_index in kf.split(train_images):
+        s_train_images = train_images[train_index]
+        s_test_images = train_images[test_index]
+        s_train_labels = train_labels[train_index]
+        s_test_labels = train_labels[test_index]
+
+        # tree = BallTree(s_train_images, leaf_size=400, metric='minkowski', p=p)
+        tree = KDTree(s_train_images, leaf_size=400,  metric='minkowski', p=p) 
+        for t_image_index in tqdm(range(len(s_test_images))): # 1/10 of one k
+            dist, ind = tree.query(s_test_images[t_image_index:t_image_index+1], k=k)
+            dist_labels = list()
+            dist_index = 0
+            for i in ind[0]:
+                dist_labels.append((dist[0][dist_index], s_train_labels[i]))
+                dist_index += 1
+            
+            # print("dist labels list with tuples: ")
+            # print(dist_labels)
+            prediction = find_majority_class(dist_labels)
+
+            if prediction != s_test_labels[t_image_index]:
+                loss += 1
+
+    emp_train_l = loss / len(train_images)
+    empirical_train_loss.append(emp_train_l)
+
+    # p = 8
+    # loss = 0
+    # print(f"for k: {k} and p: {p}")
+        
+    # for image_index in tqdm(range(len(train_images))):
+    #     train_images_loocv = np.delete(train_images, image_index, axis=0) # Leave one out, images
+    #     train_labels_loocv = np.delete(train_labels, image_index, axis=0) # Leave one out, indeces
+        
+    #     # tree = BallTree(train_images_loocv, leaf_size=3000, metric='minkowski', p=p)
+    #     tree = KDTree(train_images_loocv, leaf_size=10000,  metric='minkowski', p=p)
+    #     dist, ind = tree.query(train_images[image_index:image_index+1], k=k)
+    #     dist_labels = list()
+    #     dist_index = 0
+    #     # print(f"ind array: ")
+    #     # print(ind[0])
+    #     # print(f'ind size: {ind[0].size} and shape: {np.shape(ind[0])}')
+    #     # print(f"dist array: ")
+    #     # print(dist[0])
+    #     # print(f'dist size: {dist[0].size} and shape: {np.shape(dist[0])}')
+    #     # print(f' train lables at index 0: {train_labels[0]}')
+    #     for i in ind[0]:
+    #         dist_labels.append((dist[0][dist_index],train_labels_loocv[i]))
+    #         dist_index += 1
+        
+    #     # print("dist labels list with tuples: ")
+    #     # print(dist_labels)
+    #     prediction = find_majority_class(dist_labels)
+
+        
+    #     # prediction = predict_digits(k, train_images_loocv, train_labels_loocv, 
+    #     #                             train_images[image_index], p=p)
+
+    #     if prediction != train_labels[image_index]:
+    #         loss += 1
+
+
+    # emp_train_l = loss / len(train_images)
+    # empirical_train_loss.append(emp_train_l)
+
 def usage():
     # commands surrounded with [] are optional
     print('usage: main.py -q question_letter [-p p_for_minkowski] [--mink min_k_iter] [--maxk max_k_iter] ' +
@@ -140,7 +270,7 @@ def main(argv):
     if q == None:
         usage()
         sys.exit(2)
-    
+
     print(f'min k: {min_k}, max k: {max_k}')
 
     for k in range(min_k,max_k + 1): # Takes 6min per iteration of k
@@ -173,6 +303,9 @@ def main(argv):
         print(f'size of data: {len(data)}')
         csv_index = True
         df_results = pd.DataFrame(data=data, index=df_index)
+    elif q == 'e':
+        data = {'k': list(range(min_k,max_k+1)), 'Empirical Training Loss': empirical_train_loss}
+        df_results = pd.DataFrame(data=data)
 
     if csv_title == None:
         csv_title = f'results_q1{q}'

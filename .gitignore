@@ -136,3 +136,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# full training and test sets
+MNIST_test.csv
+MNIST_train.csv
+
