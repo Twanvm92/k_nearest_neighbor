@@ -7,6 +7,42 @@ from sklearn.model_selection import LeaveOneOut, KFold
 from timeit import default_timer as timer
 from datetime import timedelta
 from sklearn.neighbors import BallTree, DistanceMetric, KDTree
+from scipy.ndimage import interpolation
+
+
+############################## Deskewed images #########################################
+def moments(image):
+    c0,c1 = np.mgrid[:image.shape[0],:image.shape[1]] # A trick in numPy to create a mesh grid
+    totalImage = np.sum(image) #sum of pixels
+    m0 = np.sum(c0*image)/totalImage #mu_x
+    m1 = np.sum(c1*image)/totalImage #mu_y
+    m00 = np.sum((c0-m0)**2*image)/totalImage #var(x)
+    m11 = np.sum((c1-m1)**2*image)/totalImage #var(y)
+    m01 = np.sum((c0-m0)*(c1-m1)*image)/totalImage #covariance(x,y)
+    mu_vector = np.array([m0,m1]) # Notice that these are \mu_x, \mu_y respectively
+    covariance_matrix = np.array([[m00,m01],[m01,m11]]) # Do you see a similarity between the covariance matrix
+    return mu_vector, covariance_matrix
+
+def deskew(image):
+    c,v = moments(image)
+    alpha = v[0,1]/v[0,0]
+    affine = np.array([[1,0],[alpha,1]])
+    ocenter = np.array(image.shape)/2.0
+    offset = c-np.dot(affine,ocenter)
+    return interpolation.affine_transform(image,affine,offset=offset)
+
+def deskew_images(images):
+    deskewed_images = np.zeros(shape=(len(images), 28*28))
+    for x in range(len(images)):
+        image = images[x].reshape(28,28)
+        deskew_image = deskew(image)
+        deskew_image = np.reshape(deskew_image, 784)
+        for i in range(len(deskew_image)):
+            if deskew_image[i] < 0: # If the value of the pixel is higher than the threshold
+                deskew_image[i] = 0  # Replace the corresponding pixel in the new image by 1
+
+        deskewed_images[x] = deskew_image      
+    return deskewed_images
 
 ############################## Blurred images #########################################  
 def blur_images(images):
@@ -32,11 +68,16 @@ train_data = np.genfromtxt("MNIST_train.csv", delimiter=',') # Import the large 
 # train_images = blur_images(train_images) # Blur the images once
 # train_images = blur_images(train_images) # Blur the images again
 train_labels, train_images = train_data[:,0], train_data[:, 1:] # Splitting training data
+train_images = deskew_images(train_images)
 train_images = blur_images(train_images) # Blur the images once
 train_images = blur_images(train_images) # Blur the images once
 
-test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',')
+# test_data = np.genfromtxt("MNIST_test_small.csv", delimiter=',')
+test_data = np.genfromtxt("MNIST_test.csv", delimiter=',')
 test_labels, test_images = test_data[:,0], test_data[:, 1:] # Splitting test data
+test_images = deskew_images(test_images)
+test_images = blur_images(test_images) # Blur the images once
+test_images = blur_images(test_images) # Blur the images once
 
 empirical_test_loss = []; empirical_train_loss = []
 cross_validation_score = [] 
@@ -107,17 +148,17 @@ def question_c(k, max_p=15):
         # just append all scores to one long list. Scores will get grouped later by k and p with MultiIndex on df.
         cross_validation_score.append(loss / len(train_images)) 
 
-def question_e(k):
+def question_f(k):
     p = 8
     loss = 0
     print(f"for k: {k} and p: {p}")
 
     kf = KFold(n_splits=10)
-    for train_index, test_index in kf.split(train_images):
-        s_train_images = train_images[train_index]
-        s_test_images = train_images[test_index]
-        s_train_labels = train_labels[train_index]
-        s_test_labels = train_labels[test_index]
+    for train_index, test_index in kf.split(test_images):
+        s_train_images = test_images[train_index]
+        s_test_images = test_images[test_index]
+        s_train_labels = test_labels[train_index]
+        s_test_labels = test_labels[test_index]
 
         # tree = BallTree(s_train_images, leaf_size=400, metric='minkowski', p=p)
         tree = KDTree(s_train_images, leaf_size=400,  metric='minkowski', p=p) 
@@ -136,8 +177,8 @@ def question_e(k):
             if prediction != s_test_labels[t_image_index]:
                 loss += 1
 
-    emp_train_l = loss / len(train_images)
-    empirical_train_loss.append(emp_train_l)
+    cvs = loss / len(test_images)
+    cross_validation_score.append(cvs)
 
 def question_e(k):
     p = 8
@@ -305,6 +346,9 @@ def main(argv):
         df_results = pd.DataFrame(data=data, index=df_index)
     elif q == 'e':
         data = {'k': list(range(min_k,max_k+1)), 'Empirical Training Loss': empirical_train_loss}
+        df_results = pd.DataFrame(data=data)
+    elif q == 'f':
+        data = {'Cross Validation Score': cross_validation_score}
         df_results = pd.DataFrame(data=data)
 
     if csv_title == None:
